@@ -1,0 +1,102 @@
+<html manifest="cache.appcache">
+<head>
+<title> ZERALLI ALLA PS4 JB</title>
+<style>
+body {
+    background: #0a0e1a;
+    background: -webkit-linear-gradient(160deg, #0a0e1a 0%, #0d1b3a 45%, #0a1628 100%);
+    background: linear-gradient(160deg, #0a0e1a 0%, #0d1b3a 45%, #0a1628 100%);
+    color: #e8f0ff;
+    font: 15px/1.45 Arial, Helvetica, "Segoe UI", system-ui, sans-serif;
+    text-align: center;
+    margin: 0;
+    overflow: hidden;
+}
+.info {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    font-family: Consolas, monospace;
+    font-size: 16px;
+    color: #8aa4c8;
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+    letter-spacing: .04em;
+    white-space: nowrap;
+    padding: 22px 28px;
+    background: #121a2e;
+    border: 1px solid #2a4a7a;
+    -webkit-border-radius: 12px;
+    border-radius: 12px;
+    -webkit-box-shadow: 0 0 20px rgba(0, 140, 255, 0.12);
+    box-shadow: 0 0 20px rgba(0, 140, 255, 0.12);
+}
+.info b { color: #5ee7ff; font-weight: 700; text-shadow: 0 0 10px rgba(46, 184, 255, 0.45); }
+</style>
+<script>
+/*
+ * Cache primer.
+ *
+ * Every asset the exploit chain needs (jb.js, core.js, mem.js, int64.js,
+ * ps4_offsets.js, rpc_worker.js, hen.bin, goldhen.bin, ps4debug.bin,
+ * patches/*.bin) is listed in cache.appcache. If a user lands on
+ * index.html directly, the exploit starts BEFORE those downloads finish
+ * and any fetch(PAYLOAD_FILE) during the run is a live network fetch --
+ * an extra chance for a mid-exploit stall on a flaky Wi-Fi.
+ *
+ * cache.html sits in front of that: it does nothing but download the
+ * manifest with visible progress, then reload the tab. The reload
+ * re-triggers AppCache, but this time every entry is already in the
+ * on-console cache -- index.html loads instant, jb.js does the same,
+ * and every fetch inside the exploit becomes a local read.
+ *
+ * The history-stack collapse below is copied from the mansoor0x/polpNO
+ * variant of this pattern: WebKit's back-forward cache can hold onto
+ * a stale-primed exploit state from a previous run, and wiping the
+ * history entries before the reload makes the second load look like a
+ * fresh navigation.
+ */
+
+// Swap the visible URL to index.html without navigating -- so when the
+// AppCache-completion handler below calls location.reload(), the reload
+// actually hits index.html (the exploit page), not this page.
+history.replaceState(null, null, 'index.html');
+
+// Collapse the tab history so back-button behaviour is clean and WebKit
+// isn't holding references to an earlier navigation state.
+var histlength = history.length;
+try { history.go(-histlength); } catch (e) {}
+
+function DLProgress(e) {
+    var msgs = document.getElementById("msgs");
+    if (!msgs) return;
+    var pct = e.total ? Math.round(e.loaded / e.total * 100) : 0;
+    msgs.innerHTML = " ZERALLI ALLA PS4 JB &middot; Installing ... <b>" + pct + "%</b>";
+}
+
+function DisplayCacheProgress() {
+    var msgs = document.getElementById("msgs");
+    setTimeout(function () {
+        if (msgs) msgs.innerHTML = " ZERALLI ALLA PS4 JB &middot; <b>Cache OK</b>";
+    }, 1500);
+    setTimeout(function () {
+        location.reload();
+    }, 2500);
+}
+
+if (window.applicationCache) {
+    window.applicationCache.addEventListener("progress", DLProgress, false);
+    window.applicationCache.oncached = function () { DisplayCacheProgress(); };
+    window.applicationCache.onupdateready = function () { DisplayCacheProgress(); };
+    // If the cache is already there (repeat visit) neither event fires -- just
+    // hand off to the exploit page.
+    window.applicationCache.addEventListener("noupdate", function () {
+        setTimeout(function () { location.reload(); }, 200);
+    }, false);
+}
+</script>
+</head>
+<body>
+<div id="msgs" class="info"> ZERALLI ALLA PS4 JB &middot; Priming cache ...</div>
+</body>
+</html>
